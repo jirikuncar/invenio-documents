@@ -30,6 +30,7 @@ import json
 import sys
 
 import click
+from flask import current_app
 from flask_cli import with_appcontext
 from invenio_records.api import Record
 
@@ -49,20 +50,28 @@ def documents():
 
 @documents.command(name='cp')
 @click.argument('destination')
-@click.option('-i', '--identifier')
+@click.option('-i', '--identifier', required=True)
 @click.option('-p', '--pointer')
+@click.option('-f', '--filename')
 @with_appcontext
-def copy_document(destination, identifier, pointer):
+def copy_document(destination, identifier, pointer, filename):
     """Copy file to a new destination."""
     record = Record.get_record(identifier)
-    click.echo(json.dumps(
-        Document(record, pointer).copy(destination)
-    ))
+
+    if pointer:
+        document = Document(record, pointer)
+    elif filename:
+        document = current_app.extensions['invenio-documents'].get_document(
+            record, filename
+        )
+
+    assert document is not None
+    click.echo(json.dumps(document.copy(destination)))
 
 
 @documents.command()
 @click.argument('source', type=click.File('rb'), default=sys.stdin)
-@click.option('-i', '--identifier')
+@click.option('-i', '--identifier', required=True)
 @click.option('-p', '--pointer')
 @with_appcontext
 def setcontents(source, identifier, pointer):

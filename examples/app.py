@@ -72,6 +72,7 @@ app.config.update(
     CELERY_RESULT_BACKEND="cache",
     SECRET_KEY="CHANGE_ME",
     SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
+    DOCUMENTS_GETTER='invenio_documents.contrib._files:get_document',
 )
 
 db_uri = os.environ.get('SQLALCHEMY_DATABASE_URI')
@@ -81,6 +82,6 @@ if db_uri is not None:
 FlaskCLI(app)
 InvenioDB(app)
 InvenioRecords(app)
-InvenioDocuments(app)
+documents = InvenioDocuments(app)
 
 celery = create_celery_app(app)

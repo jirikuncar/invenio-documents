@@ -26,6 +26,10 @@
 
 from __future__ import absolute_import, print_function
 
+from flask import current_app
+from werkzeug.utils import import_string
+
+from .api import Document
 from .cli import documents as cmd
 
 
@@ -41,3 +45,18 @@ class InvenioDocuments(object):
         """Flask application initialization."""
         app.extensions['invenio-documents'] = self
         app.cli.add_command(cmd)
+
+    def init_config(self, app):
+        """Initialize configuration."""
+        # Getter method has to be provided.
+        app.config.setdefault('DOCUMENTS_GETTER', None)
+
+    def get_document(self, record, filename):
+        """Return an instance of Document guessed by ``DOCUMENTS_GETTER``."""
+        getter = current_app.config['DOCUMENT_GETTER']
+        if getter is not None and not callable(getter):
+            getter = import_string(getter)
+        res = getter(record, filename)
+        if res is not None:
+            pointer, _ = res
+            return Document(record, pointer)
